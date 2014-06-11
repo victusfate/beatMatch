@@ -13,11 +13,7 @@
             </div>
         </form>   
     </body>
-    <script type='text/javascript'>
-        !window.jQuery && 
-        document.write('<script src="js/jquery-1.9.1.min.js"><\/script>') && 
-        document.write('<script src="js/jquery-migrate-1.1.0.min.js"><\/script>');
-    </script>    
+    <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>    
 
     <script type='text/javascript'>
         var context         = new webkitAudioContext(2, 2 * 44100, 44100);
@@ -51,7 +47,7 @@
                             
                             console.log('decoded');
                             
-                             context.startRendering();
+                            context.startRendering();
                         });
                         
                        

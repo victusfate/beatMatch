@@ -1,12 +1,8 @@
 <!DOCTYPE html>
-<!-- from http://jsbin.com/acolet/1/edit -->
 <html>
 <head>
-	<!-- <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script> -->
-    <script type='text/javascript'>
-        !window.jQuery && 
-        document.write('<script src="js/jquery-1.9.1.min.js"><\/script>');
-    </script>
+    <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <!-- from http://jsbin.com/acolet/1/edit -->
 <meta charset=utf-8 />
 <title>JS Bin</title>
 <style>
@@ -21,12 +17,17 @@ a {
 </style>
 </head>
 <body>
+    <form>
+        <div>
+            <input type = "file" id = "files" multiple />
+        </div>
+    </form>   
   <canvas id="songcanvas" width="1000" height="325"></canvas>
-	<ul id="songs">
+    <ul id="songs">
     <li><a class="song" href="http://upload.wikimedia.org/wikipedia/en/4/45/ACDC_-_Back_In_Black-sample.ogg">ACDC</a></li>
- 	<li><a class="song" href="http://upload.wikimedia.org/wikipedia/en/9/9f/Sample_of_%22Another_Day_in_Paradise%22.ogg">Phil Collins</a></li>
- 	<li><a class="song" href="http://upload.wikimedia.org/wikipedia/en/d/db/Layla_sample_1.ogg">Clapton</a></li>
- </ul>
+    <li><a class="song" href="http://upload.wikimedia.org/wikipedia/en/9/9f/Sample_of_%22Another_Day_in_Paradise%22.ogg">Phil Collins</a></li>
+    <li><a class="song" href="http://upload.wikimedia.org/wikipedia/en/d/db/Layla_sample_1.ogg">Clapton</a></li>
+    </ul>
 </body>
 <script type='text/javascript'>
 var context = new webkitAudioContext();
@@ -89,6 +90,34 @@ $(document).ready(function(){
     var path = $(this).attr('href');
     loadSong(path);
   });
+
+    $("#files").on('change',function(e){
+        var FileList = e.target.files,
+            Reader = new FileReader();
+        
+        var File = FileList[0];
+        loadSong(File.name);
+        
+        // Reader.onload = (function(e){
+        //     context.decodeAudioData(e.target.result,function(buffer){
+                
+        //         var source = context.createBufferSource();
+        //         source.buffer = buffer;
+        //         source.connect(context.destination);
+        //         source.noteOn(0);
+                
+        //         console.log('decoded');
+                
+        //         context.startRendering();
+        //     });
+            
+           
+            
+        // });
+        
+        // Reader.readAsArrayBuffer(File);
+    });
+
 });
 </script>
 </html>
