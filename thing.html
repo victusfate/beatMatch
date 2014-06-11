@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>
+            Mixer
+        </title>
+    </head>
+    <body>
+        <form>
+            <div>
+                <input type = "file" id = "files" multiple />
+            </div>
+        </form>   
+    </body>
+    <script type='text/javascript'>
+        !window.jQuery && 
+        document.write('<script src="js/jquery-1.9.1.min.js"><\/script>') && 
+        document.write('<script src="js/jquery-migrate-1.1.0.min.js"><\/script>');
+    </script>    
+
+    <script type='text/javascript'>
+        var context         = new webkitAudioContext(2, 2 * 44100, 44100);
+        var audioBuffer        = null;
+
+        context.oncomplete = function(evt){
+            var source = context.createBufferSource();
+            source.buffer = evt.renderedBuffer;
+            source.connect(context.destination);
+            source.noteOn(0);
+            console.log('rendering complete');
+            
+            console.dir(evt.renderedBuffer.getChannelData(0));
+        }
+
+
+        $(document).ready(function(){
+            $("#files").on('change',function(e){
+                    var FileList = e.target.files,
+                        Reader = new FileReader();
+                    
+                    var File = FileList[0];
+                    
+                    Reader.onload = (function(e){
+                        context.decodeAudioData(e.target.result,function(buffer){
+                            
+                            var source = context.createBufferSource();
+                            source.buffer = buffer;
+                            source.connect(context.destination);
+                            source.noteOn(0);
+                            
+                            console.log('decoded');
+                            
+                             context.startRendering();
+                        });
+                        
+                       
+                        
+                    });
+                    
+                    Reader.readAsArrayBuffer(File);
+            });
+        });    
+    </script>
+</html>
