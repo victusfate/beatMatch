@@ -34,11 +34,13 @@ def fft(vec)
 end
 
 fname = ARGV[0]
-window_size = 1024
+window_size = 512
 wave = Array.new
 fftResults = Array.new []
 
 nsamples = 0
+
+itime = 0.023220
 
 begin
     begin
@@ -46,6 +48,8 @@ begin
         RubyAudio::Sound.open(fname) do |snd|
             puts snd.inspect
             while snd.read(buf) != 0
+                # dump these every 30hz
+                # if time 30hz compute fft and dump
                 wave.concat(buf.to_a)
                 signal = NArray.to_na(buf.to_a)
                 fft_slice = FFTW3.fft(signal).to_a[0, window_size/2]
@@ -63,7 +67,7 @@ begin
                 }
                 fftResults << mag
                 nsamples += 1
-                break if nsamples == 100 
+                break if nsamples == 1000
             end
         end
 
@@ -78,7 +82,7 @@ begin
     # nyquist frequency 22050 Hz
     # 512 samples or half window size ~43.1 hz per bin
     
-    freq = 22050/512;
+    freq = 22050/256;
     ifile = 0
 
     fileName = 'spectrum.json'
