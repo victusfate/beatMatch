@@ -67,7 +67,7 @@ begin
                 }
                 fftResults << mag
                 nsamples += 1
-                break if nsamples == 1000
+                break if nsamples == 100
             end
         end
 
