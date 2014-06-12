@@ -37,6 +37,7 @@ fname = ARGV[0]
 window_size = 512
 wave = Array.new
 fftResults = Array.new []
+# fftResults = {}
 
 nsamples = 0
 
@@ -66,8 +67,9 @@ begin
                     mag << x.magnitude; 
                 }
                 fftResults << mag
+                # fftResults[nsamples * itime] = mag
                 nsamples += 1
-                break if nsamples == 100
+                break if nsamples == 1000
             end
         end
 
