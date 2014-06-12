@@ -145,7 +145,7 @@ a {
             else{
                 beatCutOff *= beatDecayRate;
                 beatCutOff = Math.max(beatCutOff, beatMinVol);
-                onBeat = false;
+                if (beatLevel <= beatCutOff) onBeat = false;
             }
         }        
         
