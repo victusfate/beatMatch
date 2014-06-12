@@ -88,7 +88,7 @@ a {
         drawFileSpectrum();
     }
 
-    var canvas1,ctx1,gradient1;
+    var canvas1,ctx1,gradient1,gradient2;
 
     var context = new webkitAudioContext();
     var audioAnimation;
@@ -96,6 +96,61 @@ a {
     var sourceNode;
     var analyser;
     var audio;
+
+    var beatCutOff = 0;
+    var onBeat = false;
+
+    function computeBeatMatch(freqByteData) {
+
+        var levelsCount = 8;
+        var beatTime, beatLevel = 0;
+        var beatHoldTime = 15; // num of frames to hold a beat
+        var beatDecayRate = 0.97;
+        var beatMinVol = 0.25; // a volume less than this is no beat
+        var beatLevelUp = 1.05;        
+
+        var WIDTH = canvas1.width,
+            HEIGHT= canvas1.height;
+
+        
+        binCount = analyser.frequencyBinCount;
+        levelBins = Math.floor(binCount / levelsCount);
+
+        var total = 0;
+        for(var i = 0; i < levelsCount; i++) {
+            var totalForBin = 0;
+
+            for(var j = 0; j < levelBins; j++) {
+                totalForBin += freqByteData[(i * levelBins) + j];
+            }
+
+            var t = totalForBin / levelBins / 256;
+
+            total += t;
+        }
+
+        var level = total / levelsCount;
+        beatLevel = level;
+        // console.log('beatLevel',beatLevel,'beatCutOff',beatCutOff);
+
+        if (beatLevel > beatCutOff){
+            onBeat = true;
+            beatCutOff = beatLevel * beatLevelUp;
+            beatTime = 0;
+        } 
+        else {
+            if (beatTime <= beatHoldTime){
+                beatTime++;
+            }
+            else{
+                beatCutOff *= beatDecayRate;
+                beatCutOff = Math.max(beatCutOff, beatMinVol);
+                onBeat = false;
+            }
+        }        
+        
+    }
+
 
     function setupAudioNodes() {
       analyser = (analyser || context.createAnalyser());
@@ -125,17 +180,29 @@ a {
     }
 
     function drawSpectrum() {
-      var WIDTH = canvas1.width,
-          HEIGHT= canvas1.height,
-          array =  new Uint8Array(analyser.frequencyBinCount);
-      // console.log('frequency bin count',analyser.frequencyBinCount);
-      analyser.getByteFrequencyData(array);
-      ctx1.clearRect(0, 0, WIDTH, HEIGHT);
-      audioAnimation = requestAnimationFrame(drawSpectrum);
-      for ( var i = 0; i < (array.length); i++ ){
-        var value = array[i];
-        ctx1.fillRect(i*5,HEIGHT-value,3,HEIGHT);
-      }
+        var WIDTH = canvas1.width,
+            HEIGHT= canvas1.height,
+            array =  new Uint8Array(analyser.frequencyBinCount);
+        // console.log('frequency bin count',analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(array);
+        computeBeatMatch(array);
+
+        // console.log('onBeat',onBeat);
+        if (onBeat) {
+            ctx1.fillStyle = gradient2;
+            // ctx1.fillRect(0,0,WIDTH,HEIGHT);
+            // ctx1.fillStyle = gradient1;
+        }
+        else ctx1.fillStyle = gradient1;
+
+        ctx1.clearRect(0, 0, WIDTH, HEIGHT);
+        audioAnimation = requestAnimationFrame(drawSpectrum);
+        for ( var i = 0; i < (array.length); i++ ){
+            var value = array[i];
+            ctx1.fillRect(i*5,HEIGHT-value,3,HEIGHT);
+        }
+
+
     }
 
     $(document).ready(function(){
@@ -147,6 +214,13 @@ a {
         gradient1.addColorStop(0.75,'#ff0000');
         gradient1.addColorStop(0.25,'#ffff00');
         gradient1.addColorStop(0,'#ffff00');
+
+        gradient2 = ctx1.createLinearGradient(0,0,0,canvas1.height);
+        gradient2.addColorStop(1,'#000000');
+        gradient2.addColorStop(0.75,'#0000ff');
+        gradient2.addColorStop(0.25,'#00ffff');
+        gradient2.addColorStop(0,'#ffffff');
+
 
         ctx1.fillStyle = gradient1;
 
@@ -192,7 +266,7 @@ a {
         <li><a class="song" href="http://upload.wikimedia.org/wikipedia/en/1/1f/%22Layla%22%2C_Derek_and_the_Dominos_song_%28sample%29.ogg">Clapton</a></li>
     </ul>
     <canvas id="songcanvasFile" width="1000" height="325"></canvas>
-    
+
 
 </body>
 
