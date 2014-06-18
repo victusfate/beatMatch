@@ -23,71 +23,10 @@ a {
   color: #111;
   text-decoration: none;
 }
+
 </style>
 
 <script type='text/javascript'>
-/*
-    window.onload = function() {
-        var allData = RESULTS.results;
-        var keys = Object.keys(allData);
-        var data = allData[keys[0]];
-
-        var timer = new Date();
-
-        var canvas0 = document.getElementById('songcanvasFile');
-        var ctx0 = canvas0.getContext("2d");
-        var gradient0 = ctx0.createLinearGradient(0,0,0,canvas0.height);
-        gradient0.addColorStop(1,'#000000');
-        gradient0.addColorStop(0.75,'#ff0000');
-        gradient0.addColorStop(0.25,'#ffff00');
-        gradient0.addColorStop(0,'#ffff00');
-
-        ctx0.fillStyle = gradient0;
-
-        function findIndex(currentTime,deltaT) {
-            return parseInt(currentTime/deltaT,10);
-        }
-
-        function findMinMax(aVals) {
-            var minMax = {};
-            minMax.min = minMax.max = aVals[0];
-            for (var i in aVals) {
-                if (aVals[i] > minMax.max ) minMax.max = aVals[i];
-                if (aVals[i] < minMax.min ) minMax.min = aVals[i];
-            }
-            return minMax;
-        }
-
-
-        function drawFileSpectrum() {
-            var WIDTH = canvas0.width,
-                HEIGHT= canvas0.height;
-            // audioAnimation = requestAnimationFrame(drawSpectrum);
-            setInterval(function(){
-                var deltaT_ms = 0.023220 * 1000;
-                var time_ms = Date.now() - timer;
-                var iData = findIndex(time_ms,deltaT_ms);
-
-                if (iData >= 0 && iData < allData.length) {
-                    // console.log('iData',iData);
-                    ctx0.clearRect(0, 0, WIDTH, HEIGHT);
-                    data = allData[iData];
-                    var minMax = findMinMax(data);
-                    var min = minMax.min;
-                    var max = minMax.max;
-                    for ( var i = 0; i < (data.length); i++ ){
-                        // var value = data[i];
-                        // var value = 20 * Math.log(Math.abs(data[i]))/256;
-                        // var value = (data[i]-min)/(max-min) * 256;
-                        var value = 20 * Math.log(Math.abs( (data[i]-min)/(max-min) * 256 ));
-                        ctx0.fillRect(i*5,HEIGHT-value,3,HEIGHT);
-                    }
-                }
-            },75);
-        }
-        drawFileSpectrum();
-    }
-    */
 
     var canvas1,ctx1,gradient1,gradient2;
 
@@ -100,13 +39,15 @@ a {
 
     var beatCutOff = 0;
     var onBeat = false;
+    var beatMatchScale = 0;
+    var beatTime = 0;
 
     function computeBeatMatch(freqByteData) {
 
         var levelsCount = 8;
-        var beatTime, beatLevel = 0;
+        var beatLevel = 0;
         var beatHoldTime = 15; // num of frames to hold a beat
-        var beatDecayRate = 0.97;
+        var beatDecayRate = 0.7;
         var beatMinVol = 0.25; // a volume less than this is no beat
         var beatLevelUp = 1.05;        
 
@@ -133,20 +74,27 @@ a {
         var level = total / levelsCount;
         beatLevel = level;
         // console.log('beatLevel',beatLevel,'beatCutOff',beatCutOff);
-
+        
         if (beatLevel > beatCutOff){
             onBeat = true;
             beatCutOff = beatLevel * beatLevelUp;
             beatTime = 0;
+            // beatMatchScale = Math.min(1.0,4 * beatLevel);
+            beatMatchScale = 1.0; 
         } 
         else {
-            if (beatTime <= beatHoldTime){
-                beatTime++;
+            beatTime++;
+            if (beatTime < 12) {
+                beatMatchScale = 1.0/(1.0 + Math.exp(beatTime-6));
             }
-            else{
+            else beatMatchScale = 0;
+
+            if (beatTime > beatHoldTime){
                 beatCutOff *= beatDecayRate;
                 beatCutOff = Math.max(beatCutOff, beatMinVol);
-                if (beatLevel <= beatCutOff) onBeat = false;
+                if (beatLevel <= beatCutOff) {
+                    onBeat = false;
+                }
             }
         }        
         
@@ -188,13 +136,64 @@ a {
         analyser.getByteFrequencyData(array);
         computeBeatMatch(array);
 
-        // console.log('onBeat',onBeat);
-        if (onBeat) {
-            ctx1.fillStyle = gradient2;
-            // ctx1.fillRect(0,0,WIDTH,HEIGHT);
-            // ctx1.fillStyle = gradient1;
-        }
-        else ctx1.fillStyle = gradient1;
+
+        // dynamic create fillstyle
+        var baseColor0 = [0,   0,   0  ];
+        var baseColor1 = [255, 0,   0  ];
+        var baseColor2 = [255, 255, 0  ];
+        var baseColor3 = [255, 255, 0  ];
+
+        var beatColor0 = [0,   0,   0  ];
+        var beatColor1 = [0,   0,   255];
+        var beatColor2 = [0,   255, 255];
+        var beatColor3 = [255, 255, 255];
+
+        var blendColor0 = [ 
+            parseInt(baseColor0[0] * (1 - beatMatchScale) + beatColor0[0] * beatMatchScale,10),
+            parseInt(baseColor0[1] * (1 - beatMatchScale) + beatColor0[1] * beatMatchScale,10),
+            parseInt(baseColor0[2] * (1 - beatMatchScale) + beatColor0[2] * beatMatchScale,10)
+        ];
+
+        var blendColor1 = [ 
+            parseInt(baseColor1[0] * (1 - beatMatchScale) + beatColor1[0] * beatMatchScale,10),
+            parseInt(baseColor1[1] * (1 - beatMatchScale) + beatColor1[1] * beatMatchScale,10),
+            parseInt(baseColor1[2] * (1 - beatMatchScale) + beatColor1[2] * beatMatchScale,10)
+        ];
+
+        var blendColor2 = [ 
+            parseInt(baseColor2[0] * (1 - beatMatchScale) + beatColor2[0] * beatMatchScale,10),
+            parseInt(baseColor2[1] * (1 - beatMatchScale) + beatColor2[1] * beatMatchScale,10),
+            parseInt(baseColor2[2] * (1 - beatMatchScale) + beatColor2[2] * beatMatchScale,10)
+        ];
+
+        var blendColor3 = [ 
+            parseInt(baseColor3[0] * (1 - beatMatchScale) + beatColor3[0] * beatMatchScale,10),
+            parseInt(baseColor3[1] * (1 - beatMatchScale) + beatColor3[1] * beatMatchScale,10),
+            parseInt(baseColor3[2] * (1 - beatMatchScale) + beatColor3[2] * beatMatchScale,10)
+        ];
+
+        var c1 = 'rgba(' + blendColor0[0] + ',' + blendColor0[1] + ',' +  blendColor0[2] + ',1)';
+        var c2 = 'rgba(' + blendColor1[0] + ',' + blendColor1[1] + ',' +  blendColor1[2] + ',1)';
+        var c3 = 'rgba(' + blendColor2[0] + ',' + blendColor2[1] + ',' +  blendColor2[2] + ',1)';
+        var c4 = 'rgba(' + blendColor3[0] + ',' + blendColor3[1] + ',' +  blendColor3[2] + ',1)';
+
+        // console.log('beatMatchScale',beatMatchScale,'blend colors',c1,c2,c3,c4);
+
+        gradient2 = ctx1.createLinearGradient(0,0,0,canvas1.height);
+        gradient2.addColorStop(1,c1);
+        gradient2.addColorStop(0.75,c2);
+        gradient2.addColorStop(0.25,c3);
+        gradient2.addColorStop(0,c4);
+
+        ctx1.fillStyle = gradient2;
+
+        // // console.log('onBeat',onBeat);
+        // if (onBeat) {
+        //     ctx1.fillStyle = gradient2;
+        //     // ctx1.fillRect(0,0,WIDTH,HEIGHT);
+        //     // ctx1.fillStyle = gradient1;
+        // }
+        // else ctx1.fillStyle = gradient1;
 
         ctx1.clearRect(0, 0, WIDTH, HEIGHT);
         audioAnimation = requestAnimationFrame(drawSpectrum);
@@ -215,13 +214,6 @@ a {
         gradient1.addColorStop(0.75,'#ff0000');
         gradient1.addColorStop(0.25,'#ffff00');
         gradient1.addColorStop(0,'#ffff00');
-
-        gradient2 = ctx1.createLinearGradient(0,0,0,canvas1.height);
-        gradient2.addColorStop(1,'#000000');
-        gradient2.addColorStop(0.75,'#0000ff');
-        gradient2.addColorStop(0.25,'#00ffff');
-        gradient2.addColorStop(0,'#ffffff');
-
 
         ctx1.fillStyle = gradient1;
 
@@ -253,7 +245,9 @@ a {
 </script>
 </head>
 <body>
-    <canvas id="songcanvas" width="1000" height="325"></canvas>
+    <div id="backDrop" width="1000" height="325">
+        <canvas id="songcanvas" width="1000" height="325"></canvas>
+    </div>
     <form>
         <div>
             <input type = "file" id = "files" multiple />
